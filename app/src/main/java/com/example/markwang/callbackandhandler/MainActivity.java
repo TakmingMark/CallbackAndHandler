@@ -1,13 +1,17 @@
 package com.example.markwang.callbackandhandler;
 
+import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity {
+import java.lang.ref.WeakReference;
+
+public class MainActivity extends AppCompatActivity implements  NetworkDownloadServiceListener {
 
     TextView textView;
     Button button;
@@ -30,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
         textView = (TextView) findViewById(R.id.textView);
         button = (Button) findViewById(R.id.button);
         netwrokdDownloadService = new NetwrokdDownloadService();
-        mHandler=new MyHandler(this);
+        mHandler=new MyHandler(MainActivity.this);
 
     }
 
@@ -38,32 +42,72 @@ public class MainActivity extends AppCompatActivity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                netwrokdDownloadService.startDownload();
-            }
-        });
-
-        netwrokdDownloadService.setNetworkDownloadServiceListener(new NetworkDownloadServiceListener() {
-            Message message = new Message();
-            Bundle bundle=new Bundle();
-            @Override
-            public void onComplete(String str) {
-                message.what = 1;
-                bundle.putString("text",str);
-                message.setData(bundle);
-                mHandler.sendMessage(message);
-            }
-
-            @Override
-            public void onFail(String str) {
-                message.what = 0;
-                bundle.putString("text",str);
-                message.setData(bundle);
-                mHandler.sendMessage(message);
+                Log.e("onClick",Thread.currentThread().getId()+"");
+                netwrokdDownloadService.startDownload(MainActivity.this);
             }
         });
     }
 
     public void updateTextViewText(String str) {
         textView.setText(str);
+    }
+
+
+    /**
+     * avoid out of memory
+     */
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
+        mHandler.removeCallbacksAndMessages(null);
+    }
+    @Override
+    public void onComplete(String str) {
+        Message message = new Message();
+        Bundle bundle=new Bundle();
+        message.what = 1;
+        bundle.putString("text",str);
+        message.setData(bundle);
+        mHandler.sendMessage(message);
+        Log.e("onComplete",Thread.currentThread().getId()+"");
+    }
+
+    @Override
+    public void onFail(String str) {
+        Message message = new Message();
+        Bundle bundle=new Bundle();
+        message.what = 0;
+        bundle.putString("text",str);
+        message.setData(bundle);
+        mHandler.sendMessage(message);
+    }
+
+    /**
+     * avoid out of memory
+     */
+
+    private static class MyHandler extends Handler{
+        private final WeakReference<MainActivity> weakActivity;
+
+        public MyHandler(MainActivity mainActivity){
+            weakActivity=new WeakReference<MainActivity>(mainActivity);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            MainActivity mainActivity=weakActivity.get();
+            if(mainActivity!=null){
+                String  str="";
+                if(msg.what==0){
+                    str=msg.getData().getString("text");
+                }
+                else if(msg.what==1){
+                    str=msg.getData().getString("text");
+                }
+                mainActivity.updateTextViewText( str);
+            }
+            Log.e("handleMessage",Thread.currentThread().getId()+"");
+        }
     }
 }
