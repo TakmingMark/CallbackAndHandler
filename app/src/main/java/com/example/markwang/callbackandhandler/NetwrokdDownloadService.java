@@ -20,14 +20,13 @@ public class NetwrokdDownloadService {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                Looper.prepare();
                 try{
                     Thread.sleep(2000);
                     networkDownloadServiceListener.onComplete("download finish");
                 }catch(Exception e){
                     e.printStackTrace();
                 }
-                Looper.loop();
+
             }
         }).start();
     }
