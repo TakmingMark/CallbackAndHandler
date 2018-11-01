@@ -11,6 +11,14 @@ import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
 
+/**
+ * callback是程序员们写代码的一种艺术，handler是android消息通信机制，可以做线程切换
+ *
+ * 在下载完成时，可能需要做一些其它事情，如保存数据库，这个不是操作UI且耗时，所以在callback中进行
+ *
+ */
+
+
 public class MainActivity extends AppCompatActivity implements  NetworkDownloadServiceListener {
 
     TextView textView;
@@ -43,6 +51,11 @@ public class MainActivity extends AppCompatActivity implements  NetworkDownloadS
             @Override
             public void onClick(View v) {
                 Log.e("onClick",Thread.currentThread().getId()+"");
+
+                /**
+                 * 如果netwrokdDownloadService有多种情况需要回调，就要用原来的写法
+                 * netwrokdDownloadService有若干个方法都有回调，就不要一个个方法里面传个Cabllback
+                 */
                 netwrokdDownloadService.startDownload(MainActivity.this);
             }
         });
